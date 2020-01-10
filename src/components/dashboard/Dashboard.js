@@ -3,6 +3,7 @@ import ProjectList from '../projects/ProjectList';
 import NotesList from '../projects/NotesList';
 import M from "materialize-css";
 import { connect } from 'react-redux';
+import { Redirect } from 'react-router-dom';
 import { updateCurrentProjectId, createProject, updateNote, createNote, editNoteTitle, deleteNote, renameProject, deleteProject } from '../../store/actions/projectActions';
 
 function ID() {
@@ -79,7 +80,7 @@ class Dashboard extends Component {
 
         if (/\S/.test(inputValue)) {
             // string is not empty and not just whitespace
-            let new_project = {id, title: inputValue};
+            let new_project = {id, title: inputValue, notes: []};
             this.props.createProject(new_project);
         } else {
             return null
@@ -237,7 +238,8 @@ class Dashboard extends Component {
 
     render() {
         // console.log(this.props)
-        const { projects } = this.props;
+        const { projects, auth } = this.props;
+        if (!auth.uid) return <Redirect to='/login' />
         return (
             <div className="dashboard container">
                 <div className="row">
@@ -256,7 +258,8 @@ class Dashboard extends Component {
 const mapStateToProps = (state) => {
     return {
         projects: state.project.projects,
-        currentProjectId: state.project.currentProjectId
+        currentProjectId: state.project.currentProjectId,
+        auth: state.firebase.auth
     }
 }
 

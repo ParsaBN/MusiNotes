@@ -1,4 +1,7 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { logIn } from '../../store/actions/authActions';
+import { Redirect } from 'react-router-dom';
 
 class LogIn extends Component {
     state = {
@@ -7,7 +10,6 @@ class LogIn extends Component {
     }
 
     handleChange = (e) => {
-        // console.log(e.target.id)
         this.setState({
             [e.target.id]: e.target.value
         });
@@ -15,11 +17,12 @@ class LogIn extends Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        // console.log(this.state)
-        // use props and redux to send this to store of use an action
+        this.props.logIn(this.state)
     }
 
     render() {
+        const { authError, auth } = this.props;
+        if (auth.uid) return <Redirect to='/' />
         return (
             <div className="container">
                 <form onSubmit={this.handleSubmit} className="white">
@@ -30,12 +33,12 @@ class LogIn extends Component {
                     </div>
                     <div className="input-field">
                         <label htmlFor="password">Password</label>
-                        <input type="text" id="password" onChange={this.handleChange}/>
+                        <input type="password" id="password" onChange={this.handleChange}/>
                     </div>
                     <div className="input-field">
                         <button className="btn pink lighten-1 z-depth-0">Log In</button>
                         <div className="red-text center">
-                            {/* autherror */}
+                            { authError ? <p>{authError}</p> : null}
                         </div>
                     </div>
                 </form>
@@ -44,4 +47,17 @@ class LogIn extends Component {
     }
 }
 
-export default LogIn;
+const mapStateToProps = (state) => {
+    return {
+        authError: state.auth.authError,
+        auth: state.firebase.auth
+    }
+}
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        logIn: (creds) => dispatch(logIn(creds))
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(LogIn);

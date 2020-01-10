@@ -180,6 +180,19 @@ code {
   padding: 10px 40px;
 }
 
+
+/* loading page */
+
+.loading-screen {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin-top: -50px;
+  margin-left: -100px;
+}
+
+
+
 .dashboard, .container {
   width: 95%; 
   /* may need to add margin and max-width with more components */
