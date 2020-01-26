@@ -17,7 +17,7 @@ const ProjectList = ({ projects, addProjectForm, handleCurrentProject }) => {
                         return (
                             <tr className="project-name-row" key={ project.id }>
                                 <td className="project-name-cell">
-                                    <button onClick={() => handleClick(project.id)} className="waves-effect waves-light btn pink lighten-4 project-name-button">{ project.title }</button>
+                                    <button onClick={() => handleClick(project.id)} className="waves-effect waves-light btn pink lighten-4 project-name-button">{ project.projectTitle }</button>
                                 </td>
                             </tr>
                         )

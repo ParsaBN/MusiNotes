@@ -5,6 +5,11 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: url('./img/background_no_1.jpg') no-repeat; 
+  background-size: 85%;
+  background-position: bottom;
+  /* min-height: 40%; */
+  /* edit pic so there is a lot of top whitespace */
 }
 
 code {
@@ -172,6 +177,7 @@ code {
 } */
 
 .note-body {
+  background-color: white;
   padding-left: 40px;
   padding-right: 40px;
 }
@@ -179,6 +185,10 @@ code {
 #note-title-form {
   padding: 10px 40px;
 }
+
+/* .notes-list {
+  background-image: image('');
+} */
 
 
 /* loading page */
@@ -191,6 +201,23 @@ code {
   margin-left: -100px;
 }
 
+/* background img */
+
+.background-img-container {
+  border: none;
+  top: 50%;
+  left: 50%;
+  margin-top: 1%;
+  padding-left: 5px;
+  /* margin-left: 5px; */
+}
+
+.background-img {
+  width: 90%;
+  height: 50%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
 
 
 .dashboard, .container {

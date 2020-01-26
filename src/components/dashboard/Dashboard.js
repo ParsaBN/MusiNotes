@@ -2,7 +2,9 @@ import React, { Component } from 'react';
 import ProjectList from '../projects/ProjectList';
 import NotesList from '../projects/NotesList';
 import M from "materialize-css";
+import { compose } from 'redux';
 import { connect } from 'react-redux';
+import { firestoreConnect } from 'react-redux-firebase';
 import { Redirect } from 'react-router-dom';
 import { updateCurrentProjectId, createProject, updateNote, createNote, editNoteTitle, deleteNote, renameProject, deleteProject } from '../../store/actions/projectActions';
 
@@ -31,11 +33,11 @@ class Dashboard extends Component {
             return project.id === projectId;
         });
 
-        let noteIndex = this.props.projects[projectIndex].notes.findIndex(note => {
-            return note.id === noteId;
+        let noteIndex = this.props.projects[projectIndex].projectNotes.findIndex(note => {
+            return note.noteId === noteId;
         });
-
-        this.props.updateNote(newContent, projectIndex, noteIndex);
+        console.log(newContent, projectId, noteId, projectIndex, noteIndex)
+        this.props.updateNote(newContent, projectId, noteId, projectIndex, noteIndex);
     }
 
     componentDidMount = () => {
@@ -71,7 +73,6 @@ class Dashboard extends Component {
 
     ProjectFormSubmission = (e) => {
         e.preventDefault();
-        let id = ID();
         let no = e.target.id.replace(/\D/g, "") // probs dont need this either
         let elem = document.getElementById("project-item-no." + no);
         let inputValue = document.getElementById("project-name-input." + no).value;
@@ -80,7 +81,7 @@ class Dashboard extends Component {
 
         if (/\S/.test(inputValue)) {
             // string is not empty and not just whitespace
-            let new_project = {id, title: inputValue, notes: []};
+            let new_project = {projectTitle: inputValue, projectNotes: []};
             this.props.createProject(new_project);
         } else {
             return null
@@ -88,6 +89,7 @@ class Dashboard extends Component {
     }
 
     addNoteForm = (currentProjectId) => { // note will be an object of title and content
+        // maybe stop using its id in the id
         let containerID = `notes-container-${currentProjectId}`
         let notesList = document.querySelector('#' + containerID);
         let newNoteItem = document.createElement("li");
@@ -108,8 +110,6 @@ class Dashboard extends Component {
             }, 0)
         }
 
-        // console.log(notesList)
-
         notesList.insertBefore(newNoteItem, notesList.childNodes[1]);
         newNoteItem.appendChild(newNoteTitleForm);
         newNoteTitleForm.appendChild(newNoteTitleInput);
@@ -124,15 +124,13 @@ class Dashboard extends Component {
         parent.removeChild(createdNoteItem);
 
         if (/\S/.test(noteTitle)) {
-            let id = ID();
-            let newNote = {id, title: noteTitle, content: ''};
+            let noteId = ID();
+            let newNote = {noteId, noteTitle: noteTitle, noteContent: '', noteCreatedAt: new Date()};
             let projectIndex = this.props.projects.findIndex(project => {
                 return project.id === currentProjectId;
             });
-            this.props.createNote(newNote, projectIndex)
-            let col = document.querySelectorAll(".collapsible")[0];
-            var inst = M.Collapsible.getInstance(col);
-            inst.open(1)
+            let parentProjectId = currentProjectId;
+            this.props.createNote(newNote, parentProjectId, projectIndex)
         } else {
             return null
         }
@@ -164,11 +162,12 @@ class Dashboard extends Component {
                 let newNoteTitle = noteTitleInput.value;
                 if (/\S/.test(newNoteTitle)) {
                     let projectIndex = this.props.projects.findIndex(project => {
+                        console.log(project.id, currentProjectId)
                         return project.id === currentProjectId;
                     });
             
-                    let noteIndex = this.props.projects[projectIndex].notes.findIndex(note => {
-                        return note.id === currentNoteId;
+                    let noteIndex = this.props.projects[projectIndex].projectNotes.findIndex(note => {
+                        return note.noteId === currentNoteId;
                     });
 
                     noteTitleDiv.removeChild(noteTitleForm);
@@ -176,7 +175,7 @@ class Dashboard extends Component {
                     newNoteTitleStrong.className = "note-title-value";
                     newNoteTitleStrong.textContent = newNoteTitle;
                     noteTitleDiv.insertBefore(newNoteTitleStrong, noteTitleDiv.childNodes[0] || null);
-                    this.props.editNoteTitle(newNoteTitle, projectIndex, noteIndex);
+                    this.props.editNoteTitle(currentProjectId, currentNoteId, newNoteTitle, projectIndex, noteIndex);
                 }
             }
 
@@ -189,11 +188,10 @@ class Dashboard extends Component {
         let projectIndex = this.props.projects.findIndex(project => {
             return project.id === currentProjectId;
         });
-
-        let noteIndex = this.props.projects[projectIndex].notes.findIndex(note => {
+        let noteIndex = this.props.projects[projectIndex].projectNotes.findIndex(note => {
             return note.id === currentNoteId;
         });
-        this.props.deleteNote(projectIndex, noteIndex)
+        this.props.deleteNote(currentProjectId, currentNoteId, projectIndex, noteIndex)
     }
 
     ProjectTitleRename = (projectId, e) => {
@@ -219,7 +217,7 @@ class Dashboard extends Component {
                     return project.id === projectId;
                 });
                 projectTitleStrong.innerHTML = newProjectTitle;
-                this.props.renameProject(newProjectTitle, projectIndex)
+                this.props.renameProject(newProjectTitle, projectId, projectIndex)
             }
         }
 
@@ -233,11 +231,11 @@ class Dashboard extends Component {
         let projectIndex = this.props.projects.findIndex(project => {
             return project.id === projectId;
         });
-        this.props.deleteProject(projectIndex)
+        this.props.deleteProject(projectId, projectIndex)
     }
 
+
     render() {
-        // console.log(this.props)
         const { projects, auth } = this.props;
         if (!auth.uid) return <Redirect to='/login' />
         return (
@@ -257,7 +255,7 @@ class Dashboard extends Component {
 
 const mapStateToProps = (state) => {
     return {
-        projects: state.project.projects,
+        projects: state.firestore.ordered.projects,
         currentProjectId: state.project.currentProjectId,
         auth: state.firebase.auth
     }
@@ -267,13 +265,18 @@ const mapDispatchToProps = (dispatch) => {
     return {
         updateCurrentProjectId: (currentProjectId) => dispatch(updateCurrentProjectId(currentProjectId)),
         createProject: (project) => dispatch(createProject(project)),
-        updateNote: (newContent, projectIndex, noteIndex) => dispatch(updateNote(newContent, projectIndex, noteIndex)),
-        createNote: (newNote, parentProjectIndex) => dispatch(createNote(newNote, parentProjectIndex)),
-        editNoteTitle: (newNoteTitle, projectIndex, noteIndex) => dispatch(editNoteTitle(newNoteTitle, projectIndex, noteIndex)),
-        deleteNote: (projectIndex, noteIndex) => dispatch(deleteNote(projectIndex, noteIndex)),
-        renameProject: (newProjectTitle, projectIndex) => dispatch(renameProject(newProjectTitle, projectIndex)),
-        deleteProject: (projectIndex) => dispatch(deleteProject(projectIndex))
+        updateNote: (newContent, projectId, noteId, projectIndex, noteIndex) => dispatch(updateNote(newContent, projectId, noteId, projectIndex, noteIndex)),
+        createNote: (newNote, parentProjectId, parentProjectIndex) => dispatch(createNote(newNote, parentProjectId, parentProjectIndex)),
+        editNoteTitle: (currentProjectId, currentNoteId, newNoteTitle, projectIndex, noteIndex) => dispatch(editNoteTitle(currentProjectId, currentNoteId, newNoteTitle, projectIndex, noteIndex)),
+        deleteNote: (currentProjectId, currentNoteId, projectIndex, noteIndex) => dispatch(deleteNote(currentProjectId, currentNoteId, projectIndex, noteIndex)),
+        renameProject: (newProjectTitle, projectId, projectIndex) => dispatch(renameProject(newProjectTitle, projectId, projectIndex)),
+        deleteProject: (projectId, projectIndex) => dispatch(deleteProject(projectId, projectIndex))
     }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Dashboard);
+export default compose(
+    connect(mapStateToProps, mapDispatchToProps),
+    firestoreConnect([
+        { collection : 'projects', orderBy: ['projectCreatedAt', 'desc'] }, // order by time created later
+    ])
+)(Dashboard);

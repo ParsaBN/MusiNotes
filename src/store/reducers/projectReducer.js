@@ -1,32 +1,7 @@
 import update from 'immutability-helper';
 
-function ID() {
-    // Math.random should be unique because of its seeding algorithm.
-    // Convert it to base 36 (numbers + letters), and grab the first 9 characters
-    // after the decimal.
-    return '_' + Math.random().toString(36).substr(2, 9);
-};
-
 const initState = {
-    projects: [
-        {
-            id: ID(), 
-            title: 'BusMan',
-            notes: [
-                {id: ID(), title: 'term1', content: 'going for a 50'},
-                {id: ID(), title: 'note2', content: 'gonna get a solid score in this hopefully 50 too'},
-                {id: ID(), title: 'the Third', content: 'need a 45+ in this'}
-            ]
-        },
-        {
-            id: ID(), 
-            title: 'Econ',
-            notes: [
-                {id: ID(), title: 'term1', content: 'pretty confident but not cocky gonna need some serious work'},
-            ]
-        },
-        {id: ID(), title: 'EAL'}
-    ],
+    projects: [],
     currentProjectId: ''
 }
 
@@ -49,9 +24,9 @@ const projectReducer = (state = initState, action) => {
             // console.log('updating note')
             const newProjects = update(state.projects, {
                 [action.projectIndex]: {
-                    notes: {
+                    projectNotes: {
                         [action.noteIndex]: {
-                            "content": {$set: action.newContent}
+                            "noteContent": {$set: action.newContent}
                         }
                     }
                 }
@@ -63,7 +38,7 @@ const projectReducer = (state = initState, action) => {
         case 'CREATE_NOTE':
             const ProjectsWithNewNote = update(state.projects, {
                 [action.parentProjectIndex]: {
-                    notes: notes => update(notes || [], { $unshift: [action.newNote] })
+                    projectNotes: projectNotes => update(projectNotes || [], { $unshift: [action.newNote] })
                 }
             })
             return {
@@ -73,9 +48,9 @@ const projectReducer = (state = initState, action) => {
         case 'EDIT_NOTE_TITLE':
             const ProjectsWithUpdatedNote = update(state.projects, {
                 [action.projectIndex]: {
-                    notes: {
+                    projectNotes: {
                         [action.noteIndex]: {
-                            "title": {$set: action.newNoteTitle}
+                            "noteTitle": {$set: action.newNoteTitle}
                         }
                     }
                 }
@@ -87,7 +62,7 @@ const projectReducer = (state = initState, action) => {
         case 'DELETE_NOTE':
             const UpdatedProjectsWithoutNote = update(state.projects, {
                 [action.projectIndex]: {
-                    notes: {
+                    projectNotes: {
                         $splice: [[action.noteIndex, 1]]
                     }
                 }
@@ -99,7 +74,7 @@ const projectReducer = (state = initState, action) => {
         case 'RENAME_PROJECT':
             const ProjectsWithRenamedProject = update(state.projects, {
                 [action.projectIndex]: {
-                    "title": {$set: action.newProjectTitle}
+                    "projectTitle": {$set: action.newProjectTitle}
                 }
             })
             return {
