@@ -1,7 +1,17 @@
 import update from 'immutability-helper';
+import fbConfig from '../../config/fbConfig';
+
+const projectList = []
+
+fbConfig.db.collection('projects').get().then(querySnapshot => {
+    querySnapshot.forEach(doc => {
+        // console.log(doc.id, " => ", doc.data())
+        projectList.push(doc.data())
+    })
+})
 
 const initState = {
-    projects: [],
+    projects: projectList,
     currentProjectId: ''
 }
 

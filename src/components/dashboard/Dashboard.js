@@ -36,7 +36,7 @@ class Dashboard extends Component {
         let noteIndex = this.props.projects[projectIndex].projectNotes.findIndex(note => {
             return note.noteId === noteId;
         });
-        console.log(newContent, projectId, noteId, projectIndex, noteIndex)
+        // console.log(document.activeElement.parentNode)
         this.props.updateNote(newContent, projectId, noteId, projectIndex, noteIndex);
     }
 
@@ -277,6 +277,6 @@ const mapDispatchToProps = (dispatch) => {
 export default compose(
     connect(mapStateToProps, mapDispatchToProps),
     firestoreConnect([
-        { collection : 'projects', orderBy: ['projectCreatedAt', 'desc'] }, // order by time created later
+        { collection : 'projects' }, //, orderBy: ['projectCreatedAt', 'desc'], if u want ordering
     ])
 )(Dashboard);

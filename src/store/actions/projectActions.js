@@ -19,7 +19,6 @@ export const createProject = (project) => {
 
 export const updateCurrentProjectId = (currentProjectId) => {
     return (dispatch, getState) => {
-        // make async call to database
         dispatch({ type: 'UPDATE_CURRENT_PROJECT_ID', currentProjectId})
     }
 }
@@ -32,19 +31,16 @@ export const updateNote = (newContent, projectId, noteId, projectIndex, noteInde
             let project = doc.data();
             let projectNotes = project.projectNotes
             let note = projectNotes.find(note => note.noteId === noteId)
-            let newProjectNotes = firestore.FieldValue.arrayRemove(note);
-            firestore.collection('projects').doc(projectId).update({
-                projectNotes: newProjectNotes
-            }).then(() => {
-                let newNote = note
-                newNote.noteContent = newContent;
-                let newAddedProjectNotes = firestore.FieldValue.arrayUnion(newNote);
-                firestore.collection('projects').doc(projectId).update({
-                    projectNotes: newAddedProjectNotes
-                })
+            projectNotes = projectNotes.filter(item => item.noteId !== note.noteId)
+            note.noteContent = newContent
+            projectNotes.push(note)
+            firestore.collection('projects').doc(projectId).set({
+                projectNotes: projectNotes
+            }, {
+                merge: true
             })
         }).then(() => {
-            dispatch({ type: 'EDIT_NOTE_TITLE', newContent, projectIndex, noteIndex})
+            dispatch({ type: 'UPDATE_NOTE', newContent, projectIndex, noteIndex})
         })
     }
 }
